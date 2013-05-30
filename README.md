@@ -1,4 +1,4 @@
-evil-scout
+Evil Scout
 ==========
 
-Implementation of &lt;Leader> and &lt;LocalLeader> keys for evil.
+Implementation of &lt;Leader&gt; and &lt;LocalLeader&gt; keys for evil.
