@@ -123,22 +123,59 @@ Accepted arguments types are characters, strings or vectors."
   (evil-scout-build-key-sequence (evil-scout-non-normal-local-leader)
                                  c))
 
+(defmacro evil-scout-redefine-local-leader (state keymap leader)
+  `(let ((state ,state)
+         (keymap ,keymap)
+         (leader ,leader))
+     ;; FIXME: This assumes that the current binding of leader is a simple
+     ;; command.  If the leader key is already bound to a keymap, it is
+     ;; assumed that this is all right, no rebinding will occur.
+     (let ((old-binding (lookup-key keymap leader)))
+      (unless (keymapp old-binding)
+        ;; unbind leader key in this keymap
+        (evil-define-key state keymap leader nil)
+        ;; Redefine leader key as prefix, make old behavior available as
+        ;; <leader><leader>
+        (evil-define-key state keymap
+          (evil-scout-build-key-sequence leader leader)
+          old-binding)))))
+
+(defmacro evil-scout--define-leader (keymap leader key def)
+  `(progn
+     (evil-define-key 'normal ,keymap ,leader ,key ,def)))
+
 (defmacro define-key-local-leader (keymap key def)
-  `(let ((keymap ,keymap)
-         (key    ,key)
-         (def    ,def))
-     (evil-define-key 'insert keymap
-       (evil-scout-non-normal-local-leader-keys key) def)
-     (evil-define-key 'normal keymap
-       (evil-scout-local-leader-keys key) def)))
+  `(let* ((keymap ,keymap)
+          (key    ,key)
+          (def    ,def))
+      (progn
+       (evil-scout-redefine-local-leader 'insert keymap
+                                   (evil-scout-non-normal-local-leader))
+       (evil-define-key 'insert keymap
+         (evil-scout-non-normal-local-leader-keys key) def)
+
+       (evil-scout-redefine-local-leader 'normal keymap
+                                   (evil-scout-local-leader))
+       (evil-define-key 'normal keymap
+         (evil-scout-local-leader-keys key) def))))
 
 (defmacro define-key-leader (key def)
   `(let ((key ,key)
          (def ,def))
+     ;; FIXME: combine the pairwise corresponding sexps into single function
+     ;; or macro calls.
+     (evil-scout-redefine-local-leader nil evil-insert-state-map
+       (evil-scout-non-normal-leader))
      (define-key evil-insert-state-map
        (evil-scout-non-normal-leader-keys key) def)
+
+     (evil-scout-redefine-local-leader nil evil-visual-state-map
+       (evil-scout-non-normal-leader))
      (define-key evil-visual-state-map
        (evil-scout-non-normal-leader-keys key) def)
+
+     (evil-scout-redefine-local-leader nil evil-normal-state-map
+       (evil-scout-leader))
      (define-key evil-normal-state-map
        (evil-scout-leader-keys key) def)))
 
