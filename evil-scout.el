@@ -17,6 +17,29 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+;;; Commentary
+
+;; Usage:
+
+;; Set <Leader> to "," and <LocalLeader> to "\" (backslash)
+
+;; (setq evil-scout-leader-key ","
+;;       evil-scout-local-leader-key "\\")
+
+;; Note that setting both to the same key might lead to conflict (needs
+;; fixing).
+
+;; Define "\e" to eval the current top-level sexp the curser is in, but only
+;; if emacs-lisp mode is active
+;; (define-key-local-leader emacs-lisp-mode-map "e" 'eval-defun)
+
+;; Define ",b" to call ido-switch-buffer.
+;; (define-key-leader "b" 'ido-switch-buffer)
+
+;; The previous binding of the leader keys will stay available under
+;; <leader><leader> and <localleader><localleader> respectivly.
+
+
 ;;; Code
 
 (require 'evil)
@@ -68,7 +91,7 @@ Accepted arguments types are characters, strings or vectors."
 
 (defun evil-scout-non-normal-leader ()
   (if (null evil-scout-non-normal-leader-key)
-      (vector (list 'control evil-scout-leader-key))
+      (vector (cons 'control (coerce (evil-scout-leader) 'list)))
     (evil-scout-build-key-sequence
      evil-scout-non-normal-leader-key)))
 
@@ -77,7 +100,7 @@ Accepted arguments types are characters, strings or vectors."
 
 (defun evil-scout-non-normal-local-leader ()
   (if (null evil-scout-non-normal-local-leader-key)
-      (vector (list 'control evil-scout-local-leader-key))
+      (vector (cons 'control (coerce (evil-scout-local-leader) 'list)))
     (evil-scout-build-key-sequence
      evil-scout-non-normal-local-leader-key)))
 
