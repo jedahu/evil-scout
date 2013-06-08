@@ -19,26 +19,7 @@
 
 ;;; Commentary
 
-;; Usage:
-
-;; Set <Leader> to "," and <LocalLeader> to "\" (backslash)
-
-;; (setq evil-scout-leader-key ","
-;;       evil-scout-local-leader-key "\\")
-
-;; Note that setting both to the same key might lead to conflict (needs
-;; fixing).
-
-;; Define "\e" to eval the current top-level sexp the curser is in, but only
-;; if emacs-lisp mode is active
-;; (define-key-local-leader emacs-lisp-mode-map "e" 'eval-defun)
-
-;; Define ",b" to call ido-switch-buffer.
-;; (define-key-leader "b" 'ido-switch-buffer)
-
-;; The previous binding of the leader keys will stay available under
-;; <leader><leader> and <localleader><localleader> respectivly.
-
+;;; WRITEME
 
 ;;; Code
 
