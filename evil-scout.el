@@ -111,8 +111,8 @@ Example:
            (leader-seq     (evil-scout-key-sequence            'leader key)))
        (define-key evil-emacs-state-map  non-normal-seq def)
        (define-key evil-insert-state-map non-normal-seq def)
-       (define-key evil-visual-state-map non-normal-seq def)
        (define-key evil-motion-state-map non-normal-seq def)
+       (define-key evil-visual-state-map leader-seq def)
        (define-key evil-normal-state-map leader-seq     def))))
 
 (defmacro evil-scout-reset (leader keymap)
