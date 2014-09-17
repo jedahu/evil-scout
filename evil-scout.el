@@ -100,8 +100,8 @@ Example:
            (leader-seq     (evil-scout-key-sequence leader key)))
        (evil-define-key 'emacs  keymap non-normal-seq def)
        (evil-define-key 'insert keymap non-normal-seq def)
-       (evil-define-key 'visual keymap non-normal-seq def)
        (evil-define-key 'motion keymap non-normal-seq def)
+       (evil-define-key 'visual keymap leader-seq def)
        (evil-define-key 'normal keymap leader-seq def))))
 
 (defmacro define-global-leader (key def)
