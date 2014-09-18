@@ -30,14 +30,15 @@
   :group 'evil
   :prefix 'evil-scout-)
 
-(defcustom evil-scout-keys-alist '((leader . ",")
-                                   (local-leader . "\\"))
-  "Assoc list of <leader> types and assigned keys."
+(defcustom evil-scout-keys-alist
+  `((leader "," ,evil-normal-state-map ,evil-visual-state-map)
+    (local-leader "\\" normal visual insert))
+  "Assoc list of <leader> types, assigned keys, and states."
   :type 'list
   :group 'evil-scout)
 
-(defcustom evil-scout-keys-in-non-normal '(leader local-leader)
-  "List of <leader>s which should be available in non-normal mode."
+(defcustom evil-scout-keys-in-other-states '(leader local-leader)
+  "List of <leader>s which should be available in non-listed states."
   :type 'list
   :group 'evil-scout)
 
@@ -46,12 +47,18 @@
   :type 'list
   :group 'evil-scout)
 
-(defcustom evil-scout-non-normal-modifier 'control
-  "Modifier key to use <leader> in non-normal mode."
+(defcustom evil-scout-other-states-modifier 'control
+  "Modifier key to use <leader> in non-listed states."
   :type 'symbol
   :group 'evil-scout)
 
 ;;; Utilities
+
+(defun evil-scout-leader-key (leader)
+  (second (assoc leader evil-scout-keys-alist)))
+
+(defun evil-scout-leader-states (leader)
+  (cddr (assoc leader evil-scout-keys-alist)))
 
 (defun evil-scout-build-key-sequence (&rest keys)
   "Build a sequence from individual keys and subsequences.
@@ -75,48 +82,64 @@ Example:
 (defun evil-scout-key-sequence (leader &optional keys)
   "Get key sequence for `leader'."
   (evil-scout-build-key-sequence
-   (cdr (assoc leader evil-scout-keys-alist))
+   (evil-scout-leader-key leader)
    keys))
 
-(defun evil-scout-in-non-normal-state-p (leader)
+(defun evil-scout-in-other-states-p (leader)
   "If `leader' should be accessible in non-normal state."
-  (find leader evil-scout-keys-in-non-normal))
+  (find leader evil-scout-keys-in-other-states))
 
-(defun evil-scout-non-normal-key-sequence (leader &optional keys)
+(defun evil-scout-other-states-key-sequence (leader &optional keys)
   "The key sequence for `leader' in non-normal state."
-  (when (evil-scout-in-non-normal-state-p leader)
+  (when (evil-scout-in-other-states-p leader)
     (evil-scout-build-key-sequence
-     (vector (cons evil-scout-non-normal-modifier
+     (vector (cons evil-scout-other-states-modifier
                    (coerce (evil-scout-key-sequence leader) 'list)))
      keys)))
 
+(defvar evil-scout-local-states
+  '(emacs insert motion visual normal))
+
+(defvar evil-scout-global-states
+  (list evil-emacs-state-map
+        evil-insert-state-map
+        evil-motion-state-map
+        evil-visual-state-map
+        evil-normal-state-map))
+
 ;;; Leader Key
-(defmacro define-leader-key (leader keymap key def)
-  `(let ((leader ,leader)
-         (keymap ,keymap)
-         (key    ,key)
-         (def    ,def))
-     (let ((non-normal-seq (evil-scout-non-normal-key-sequence leader key))
-           (leader-seq     (evil-scout-key-sequence leader key)))
-       (evil-define-key 'emacs  keymap non-normal-seq def)
-       (evil-define-key 'insert keymap non-normal-seq def)
-       (evil-define-key 'motion keymap non-normal-seq def)
-       (evil-define-key 'visual keymap leader-seq def)
-       (evil-define-key 'normal keymap leader-seq def))))
+(defun define-leader-key (leader keymap key def)
+  (let ((leader leader)
+        (keymap keymap)
+        (key    key)
+        (def    def))
+    (let ((other-seq     (evil-scout-other-states-key-sequence leader key))
+          (leader-seq    (evil-scout-key-sequence leader key))
+          (leader-states (evil-scout-leader-states leader)))
+      (mapc #'(lambda (state)
+                (evil-define-key state keymap leader-seq def))
+            leader-states)
+      (mapc #'(lambda (state)
+                (unless (member state leader-states)
+                  (evil-define-key state keymap other-seq def)))
+            evil-scout-local-states))))
 
-(defmacro define-global-leader (key def)
-  `(let ((key    ,key)
-         (def    ,def))
-     (let ((non-normal-seq (evil-scout-non-normal-key-sequence 'leader key))
-           (leader-seq     (evil-scout-key-sequence            'leader key)))
-       (define-key evil-emacs-state-map  non-normal-seq def)
-       (define-key evil-insert-state-map non-normal-seq def)
-       (define-key evil-motion-state-map non-normal-seq def)
-       (define-key evil-visual-state-map leader-seq def)
-       (define-key evil-normal-state-map leader-seq     def))))
+(defun define-global-leader (key def)
+  (let ((key    key)
+        (def   def))
+    (let ((other-seq   (evil-scout-other-states-key-sequence 'leader key))
+          (leader-seq  (evil-scout-key-sequence              'leader key))
+          (leader-maps (evil-scout-leader-states 'leader)))
+      (mapc #'(lambda (state-map)
+                (define-key state-map leader-seq def))
+            leader-maps)
+      (mapc #'(lambda (state-map)
+                (unless (member state-map leader-maps)
+                  (define-key state-map other-seq def)))
+	    evil-scout-global-states))))
 
-(defmacro evil-scout-reset (leader keymap)
-  `(define-leader-key ,leader ,keymap nil nil))
+(defun evil-scout-reset (leader keymap)
+  (define-leader-key leader keymap nil nil))
 
 (provide 'evil-scout)
 ;;; evil-scout.el ends here
